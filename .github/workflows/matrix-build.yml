@@ -1,0 +1,50 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # matrix: 3+ variants produced by combining 3 OS values and 2 Node versions -> 6 jobs
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [14, 16]
+
+    # run each matrix job on the chosen OS
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: matrix-5c569dc
+        # the required identifier must appear exactly like this in a step
+        run: |
+          echo "matrix step identifier: matrix-5c569dc"
+          echo "Variant: OS=${{ matrix.os }} NODE=${{ matrix.node }}"
+
+      - name: Generate build artifact (create non-empty file)
+        run: |
+          # create a unique file name for this variant
+          ARTFILE=artifact-${{ matrix.os }}-node${{ matrix.node }}.txt
+          echo "Build output for OS=${{ matrix.os }} NODE=${{ matrix.node }}" > "$ARTFILE"
+          echo "Timestamp: $(date --utc || date)" >> "$ARTFILE"
+          # show file size to ensure it's non-empty
+          ls -l "$ARTFILE" || true
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # artifact name MUST begin with the required prefix
+          name: build-5c569dc-${{ matrix.os }}-node${{ matrix.node }}
+          path: artifact-${{ matrix.os }}-node${{ matrix.node }}.txt
